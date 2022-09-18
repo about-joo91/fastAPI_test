@@ -1,10 +1,10 @@
 import hashlib
 
-from sqlalchemy.orm import Session
 from sqlalchemy import and_
+from sqlalchemy.orm import Session
 
+from routers.users.api.v1.schemas.user_info_request import UserCreate, UserSignIn, UserUpdate
 from routers.users.models import UserModel
-from routers.users.api.v1.schemas.user_info_request import UserUpdate, UserCreate, UserSignIn
 
 
 def get_user_service(db: Session, user: UserSignIn) -> UserModel:
@@ -12,8 +12,10 @@ def get_user_service(db: Session, user: UserSignIn) -> UserModel:
     db세션과 login_input을 받아와
     유저모델을 반환하는 서비스 함수
     """
-    hashed_password = hashlib.sha256(user.password.encode('utf-8')).hexdigest()
-    return db.query(UserModel).filter(and_(UserModel.email == user.email, UserModel.password == hashed_password)).first()
+    hashed_password = hashlib.sha256(user.password.encode("utf-8")).hexdigest()
+    return (
+        db.query(UserModel).filter(and_(UserModel.email == user.email, UserModel.password == hashed_password)).first()
+    )
 
 
 def create_user_service(db: Session, user: UserCreate) -> str:
@@ -22,7 +24,7 @@ def create_user_service(db: Session, user: UserCreate) -> str:
     유저데이터를 저장하고
     유저모델을 반환하는 서비스 함수
     """
-    hashed_password = hashlib.sha256(user.password.encode('utf-8')).hexdigest()
+    hashed_password = hashlib.sha256(user.password.encode("utf-8")).hexdigest()
     new_user = UserModel(name=user.name, email=user.email, password=hashed_password)
 
     db.add(new_user)

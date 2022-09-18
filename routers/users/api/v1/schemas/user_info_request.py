@@ -3,7 +3,6 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-
 class UserBase(BaseModel):
     id: int
     name: str
@@ -15,6 +14,7 @@ class UserBase(BaseModel):
     class Config:
         orm_mode = True
 
+
 class UserCreate(BaseModel):
 
     name: str
@@ -24,6 +24,7 @@ class UserCreate(BaseModel):
     class Config:
         orm_mode = True
 
+
 class UserSignIn(BaseModel):
 
     email: str
@@ -31,7 +32,6 @@ class UserSignIn(BaseModel):
 
     class Config:
         orm_mode = True
-
 
 
 class UserUpdate(BaseModel):
