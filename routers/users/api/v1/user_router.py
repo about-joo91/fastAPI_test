@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import ValidationError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from config import JWT_SECRET_KEY
@@ -22,7 +24,12 @@ router = APIRouter(prefix="/users")
 
 @router.post("/sign_up", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def sign_up(user: UserCreate, db: Session = Depends(get_db)) -> UserResponse:
-    create_user_service(db=db, user=user)
+    try:
+        create_user_service(db=db, user=user)
+    except ValidationError as e:
+        raise HTTPException(400, detail=e)
+    except IntegrityError:
+        raise HTTPException(400, detail="이미 존재하는 이메일입니다.")
     return user
 
 
