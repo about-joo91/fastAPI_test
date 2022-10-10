@@ -37,7 +37,10 @@ async def sign_up(user: UserCreate, db: Session = Depends(get_db)) -> UserRespon
 async def sign_in(user: UserSignIn, db: Session = Depends(get_db)) -> SignInResponse:
     cur_user = get_user_service(db, user=user)
     if cur_user:
-        payload = {"id": str(cur_user.email), "exp": datetime.utcnow() + timedelta(seconds=60 * 60 * 10)}
+        payload = {
+            "id": str(cur_user.email),
+            "exp": datetime.utcnow() + timedelta(seconds=60 * 60 * 10),
+        }
         token = jwt.encode(payload=payload, key=JWT_SECRET_KEY, algorithm="HS256")
         return {"access_token": token}
     raise HTTPException(404, detail="이메일 혹은 비밀번호를 확인해주세요.")
