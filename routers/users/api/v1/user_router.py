@@ -21,19 +21,21 @@ from .schemas.user_info_response import SignInResponse, UserResponse
 Base.metadata.create_all(bind=engine)
 router = APIRouter(prefix="/users")
 
+HEADERS = {"Content-Type": "application/json; charset=utf-8"}
+
 
 @router.post("/sign_up", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def sign_up(user: UserCreate, db: Session = Depends(get_db)) -> UserResponse:
     try:
         create_user_service(db=db, user=user)
     except ValidationError as e:
-        raise HTTPException(400, detail=e)
+        raise HTTPException(detail=e, headers=HEADERS)
     except IntegrityError:
-        raise HTTPException(400, detail="이미 존재하는 이메일입니다.")
+        raise HTTPException(400, detail=[{"msg": "이미 존재하는 이메일입니다."}], headers=HEADERS)
     return user
 
 
-@router.post("/login", response_model=SignInResponse, status_code=status.HTTP_200_OK)
+@router.post("/sign_in", response_model=SignInResponse, status_code=status.HTTP_200_OK)
 async def sign_in(user: UserSignIn, db: Session = Depends(get_db)) -> SignInResponse:
     cur_user = get_user_service(db, user=user)
     if cur_user:
@@ -43,7 +45,7 @@ async def sign_in(user: UserSignIn, db: Session = Depends(get_db)) -> SignInResp
         }
         token = jwt.encode(payload=payload, key=JWT_SECRET_KEY, algorithm="HS256")
         return {"access_token": token}
-    raise HTTPException(404, detail="이메일 혹은 비밀번호를 확인해주세요.")
+    raise HTTPException(404, detail=[{"msg": "이메일 혹은 비밀번호를 확인해주세요."}])
 
 
 @router.put("/{user_id}", status_code=status.HTTP_200_OK)

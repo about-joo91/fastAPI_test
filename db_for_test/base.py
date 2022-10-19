@@ -11,8 +11,10 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 def override_get_db() -> AsyncIterable[Session]:
     db = None
+
     try:
         db = TestingSessionLocal()
         yield db
+        db.rollback()
     finally:
         db.close()
