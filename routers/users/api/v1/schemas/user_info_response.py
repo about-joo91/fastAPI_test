@@ -10,5 +10,10 @@ class UserResponse(BaseModel):
 
 
 class SignInResponse(BaseModel):
-
+    msg: str
     access_token: str
+
+
+class UserUpdateResponse(BaseModel):
+    msg: str
+    name: str

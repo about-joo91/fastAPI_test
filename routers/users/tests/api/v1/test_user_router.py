@@ -100,6 +100,7 @@ class TestUserAPI(TestCase):
         result = response.json()
 
         assert response.status_code == 200
+        assert result["msg"] == "로그인 성공"
         assert "access_token" in result
 
     def test_sign_in_비밀번호가_틀렸을때(self) -> None:
@@ -137,3 +138,43 @@ class TestUserAPI(TestCase):
 
         assert result["detail"][0]["msg"] == "올바른 이메일 형식이 아닙니다."
         assert response.status_code == 422
+
+    def test_update_user_성공했을_때(self) -> None:
+        client = TestClient(base_url="http://127.0.0.1:8000", app=app)
+
+        update_data = {"name": "test", "password": "p@sswords"}
+        response = client.put("/users/1", data=json.dumps(update_data))
+
+        result = response.json()
+
+        user = TestingSessionLocal().query(UserModel).filter(UserModel.id == 1).first()
+        hashed_password = hashlib.sha256("p@sswords".encode("utf-8")).hexdigest()
+
+        assert user.name == "test"
+        assert user.password == hashed_password
+        assert result["msg"] == "업데이트가 완료 되었습니다"
+        assert response.status_code == 200
+
+    def test_update_user_비밀번호에_특수문자가_없을때(self) -> None:
+        client = TestClient(base_url="http://127.0.0.1:8000", app=app)
+
+        update_data = {"name": "test", "password": "password"}
+
+        response = client.put("/users/1", data=json.dumps(update_data))
+
+        result = response.json()
+
+        assert result["detail"][0]["msg"] == "비밀번호는 특수문자를 포함해야 합니다."
+        assert response.status_code == 422
+
+    def test_update_user_없는_유저를_업데이트_하려고_할때(self) -> None:
+        client = TestClient(base_url="http://127.0.0.1:8000", app=app)
+
+        update_data = {"name": "test", "password": "p@ssword"}
+
+        response = client.put("/users/999", data=json.dumps(update_data))
+
+        result = response.json()
+
+        assert result["detail"][0]["msg"] == "권한이 없습니다."
+        assert response.status_code == 401

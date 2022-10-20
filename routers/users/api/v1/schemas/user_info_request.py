@@ -63,3 +63,11 @@ class UserUpdate(BaseModel):
 
     class Config:
         orm_mode = True
+
+    @validator("password", pre=True, always=True)
+    def password는_특수문자를_포함하고_8자이상이어야_한다(cls, v):
+        if len(v) < 8:
+            raise ValueError("비밀번호는 8자 이상이어야 합니다.")
+        if not REG.findall(v):
+            raise ValueError("비밀번호는 특수문자를 포함해야 합니다.")
+        return v
