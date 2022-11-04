@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 import jwt
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
@@ -15,6 +15,7 @@ from routers.users.services.user_info_service import (
     get_user_service,
     update_user_service,
 )
+from utils.utils import HEADERS, is_authenticated
 
 from .schemas.user_info_request import UserCreate, UserSignIn, UserUpdate
 from .schemas.user_info_response import SignInResponse, UserResponse, UserUpdateResponse
@@ -22,21 +23,8 @@ from .schemas.user_info_response import SignInResponse, UserResponse, UserUpdate
 Base.metadata.create_all(bind=engine)
 router = APIRouter(prefix="/users")
 
-HEADERS = {"Content-Type": "application/json; charset=utf-8"}
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-
-async def is_authenticate(authorization: str | None = Header(default=None)):
-    if not authorization:
-        raise HTTPException(status_code=401, detail=[{"msg": "로그인이 필요합니다."}], headers=HEADERS)
-    token = authorization.split(" ", 1)[1]
-    if not token:
-        raise HTTPException(status_code=401, detail=[{"msg": "로그인이 필요합니다."}], headers=HEADERS)
-    try:
-        jwt.decode(token, JWT_SECRET_KEY, algorithms=["HS256"])
-    except jwt.exceptions.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail=[{"msg": "만료된 토큰입니다."}], headers=HEADERS)
 
 
 @router.post("/sign_up", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -67,7 +55,7 @@ async def sign_in(user: UserSignIn, db: Session = Depends(get_db)) -> SignInResp
     "/{user_id}",
     status_code=status.HTTP_200_OK,
     response_model=UserUpdateResponse,
-    dependencies=[Depends(is_authenticate)],
+    dependencies=[Depends(is_authenticated)],
 )
 async def update_user(
     user: UserUpdate,
